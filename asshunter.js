@@ -19,18 +19,21 @@ var hero = process.env.HERO;
 
 var herowifkey = process.env.HERO_WIF_KEY;
 
-// ***IMPORTANT*** Enter Asshat's Account Below (No @)
-var asshat = "nobutsd";
-
 var totalblocks = 0;
 var totalvote = 0;
+var pendingvote = 0;
 var totalcomment = 0;
 var totalops = 0;
 var apiindex = 1;
 
-const apinodes = ["hived.privex.io", "api.hivekings.com", "api.deathwing.me", "api.hive.blog", "api.openhive.network", "hive.loelandp.nl", "hive-api.arcange.eu", "rpc.ausbit.dev", "anyx.io"];
+const apinodes = ["hived.privex.io", "api.deathwing.me", "api.hive.blog", "api.openhive.network", "hive.loelandp.nl", "hive-api.arcange.eu", "rpc.ausbit.dev", "anyx.io"];
 
-hivejs.api.setOptions({ url: "https://api.hivekings.com" });
+hivejs.api.setOptions({ url: "https://api.deathwing.me" });
+
+const masteruser = "klye";
+
+const usernames = ['username1', 'username2'];
+const userprivkeys = ['5fjkhasfkjshfkasjfh', '5asdjhasdkjhasdkjashd'];
 
 async function changenode() {
   if (apiindex < apinodes.length){
@@ -44,19 +47,31 @@ async function changenode() {
 
   var starttime = dt.format('Y-m-d H:M:S');
 
-  console.log("\nShitList v0.0.1 Anti Phish - By @KLYE");
+  console.log("Vote Cloner v0.0.1 - By @KLYE");
   console.log("Start Time: " + starttime + "\n");
 
+var acctiterate = 0;
+  var process_vote = function(op) {
+    if (op["voter"] == masteruser) {
+      pendingvote++;
+      console.log("-------------------------------------------------------------");
+      console.log("----- Master Vote DETECTED - Cloning Vote amongst slaves! -----");
+      console.log("-------------------------------------------------------------");
 
-  var process_comment = function(op) {
-    if (op["author"] == asshat) {
-      totalcomment++
-      console.log("-------------------------------------------------------------");
-      console.log("----- ASSHAT COMMENT DETECTED - Deploying Counter Comment! -----");
-      console.log("-------------------------------------------------------------");
-      hivejs.broadcast.comment(herowifkey, op["author"], op["parent_permlink"], hero, op["author"], "WARNING", "<h1>DO NOT CLICK ON THE LINK ABOVE!</h1>\nThe Account above was recently hacked in a phishing attack and is spamming for more victims.", {}, function(err, result) {
-        console.log(err, result);
-      });
+      for(acct in usernames) {
+
+                totalvote++
+                pendingvote--;
+                hivejs.broadcast.vote(userprivkeys[acctiterate], usernames[acctiterate], op["author"], op["permlink"], 10000, function(err, result) { //10000 is 100%
+                  console.log(err, result);
+                });
+
+              //hivejs.broadcast.comment(herowifkey, op["author"], op["parent_permlink"], hero, op["author"], "WARNING", "<h1>DO NOT CLICK ON THE LINK ABOVE!</h1>\nThe Account above was recently hacked in a phishing attack and is spamming for more victims.", {}, function(err, result) {
+              //  console.log(err, result);
+              //});
+              acctiterate++;
+      }
+
     }
   };
 
@@ -74,8 +89,8 @@ async function changenode() {
             totalops++;
             var opType = op[0];
             var opgrab = op[1];
-            if (opType == "comment") {
-              process_comment(opgrab);
+            if (opType == "vote") {
+              process_vote(opgrab);
             }
           });
         });
@@ -87,6 +102,6 @@ async function changenode() {
     if(err1) changenode();
     if(newestblock) await parseBlock(newestblock);
     totalblocks++
-    process.stdout.write(`SHITLIST: @${asshat} - #${newestblock} - Blocks Monitored: ${totalblocks} - Ops Scanned: ${totalops} - Phishes Fried: ${totalcomment}`);
+    process.stdout.write(`Master: @${masteruser} - #${newestblock} - Blocks Monitored: ${totalblocks} - Ops Scanned: ${totalops} - Pending Votes: ${pendingvote} - Completed Votes: ${totalvote}`);
     process.stdout.cursorTo(0);
   });
